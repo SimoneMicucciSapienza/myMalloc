@@ -1,13 +1,10 @@
 #pragma once
 
-//not the best work of art but valuable definition
-#define color	const char*
-
-//define color to utilize
-color	RESET	="\033[0m";
-color	YELLOW	="\033[38;2;255;255;0m";
-color	RED	="\033[38;2;255;0;0m";
-color	BLUE	="\033[38;2;0;0;255m";
-color	GREEN	="\033[38;2;0;255;0m";
-color	ORANGE	="\033[38;2;255;127;0m";
-color	PURPLE	="\033[38;2;255;0;255m";
+//in this way I lose linking problem, just:	e x p a n d   s t u f f
+#define	RESET	"\033[0m"
+#define	YELLOW	"\033[38;2;255;255;0m"
+#define	RED	"\033[38;2;255;0;0m"
+#define	BLUE	"\033[38;2;0;0;255m"
+#define	GREEN	"\033[38;2;0;255;0m"
+#define	ORANGE	"\033[38;2;255;127;0m"
+#define	PURPLE	"\033[38;2;255;0;255m"

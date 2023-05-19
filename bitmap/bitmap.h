@@ -30,7 +30,7 @@ void	BitMap_set(BitMap* this, int pos_bit, uint8_t status);
 uint8_t	BitMap_get(BitMap* this, int pos_bit);
 
 //	bitmap destroy
-void	BitMap_destroy(BitMap* this);
+//void	BitMap_destroy(BitMap* this);	//how can I destroy if I don't initialize the pointer?
 
 //	bitmap print
 void	BitMap_print(BitMap* this);
@@ -43,3 +43,4 @@ int	BitMap_getBytes(BitMap* this, int pos_bit);
  * 	1	2	4	8
  * 	1110	1101	1011	0111
  * 	e	d	b	7
+ */

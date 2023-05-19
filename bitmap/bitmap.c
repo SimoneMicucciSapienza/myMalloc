@@ -1,4 +1,14 @@
 #include "bitmap.h"
+#include "color.h"
+
+
+#define	RESET	"\033[0m"
+#define	YELLOW	"\033[38;2;255;255;0m"
+#define	RED	"\033[38;2;255;0;0m"
+#define	BLUE	"\033[38;2;0;0;255m"
+#define	GREEN	"\033[38;2;0;255;0m"
+#define	ORANGE	"\033[38;2;255;127;0m"
+#define	PURPLE	"\033[38;2;255;0;255m"
 
 #include <stdio.h>
 
@@ -73,17 +83,62 @@ void	BitMap_set(BitMap* this, int pos_bit, uint8_t status){
 uint8_t	BitMap_get(BitMap* this, int pos_bit){
 	if (this->num_bits < pos_bit)
 		return 2;
-	uint8_t ret = this->buffer[(pos_bit/8)+((pos_bit%8)!=0)]
-}
-
-//	bitmap destroy
-void	BitMap_destroy(BitMap* this){
+	uint8_t target = this->buffer[(pos_bit/8) - (!pos_bit%8)];
+	switch (pos_bit%8) {		//not best implementation but good enouth for now
+		case 0 :		//8^ bit:
+			return (uint8_t)(target & 0x01);
+		case 1 :		//1^ bit:
+			return (uint8_t)(target & 0x80);
+		case 2 :		//2^ bit:
+			return (uint8_t)(target & 0x40);
+		case 3 :		//3^ bit:
+			return (uint8_t)(target & 0x20);
+		case 4 :		//4^ bit:
+			return (uint8_t)(target & 0x10);
+		case 5 :		//5^ bit:
+			return (uint8_t)(target & 0x08);
+		case 6 :		//6^ bit:
+			return (uint8_t)(target & 0x04);
+		case 7 :		//7^ bit:
+			return (uint8_t)(target & 0x02);
+	}
+	return 2;
 }
 
 //	bitmap print
 void	BitMap_print(BitMap* this){
+	printf("bitmap:\t%s%p%s",(!this)?ORANGE:YELLOW,this,RESET);
+	if (!this){
+		printf("\n");
+		return;
+	}
+	printf("\tbits:\t%s%d%s\tbytes:\t%s%d%s\n",GREEN,this->num_bits,RESET,GREEN,this->buffer_size,RESET);
+	char* ptr = (char*)this->buffer;
+	printf("buffer content:");
+	//a line contain 4 byte, aka 8 hex
+	int cnt = 0;
+	while (1) {
+		if (cnt==this->buffer_size)
+			return;
+		if (!(cnt%4))
+			printf("\n\t");
+		char hex[9]="0000 0000";
+		if ((*ptr & 0x80))	hex[0]='1';	//set bit 1
+		if ((*ptr & 0x40))	hex[1]='1';	//set bit 1
+		if ((*ptr & 0x20))	hex[2]='1';	//set bit 1
+		if ((*ptr & 0x10))	hex[3]='1';	//set bit 1
+		if ((*ptr & 0x08))	hex[5]='1';	//set bit 1
+		if ((*ptr & 0x04))	hex[6]='1';	//set bit 1
+		if ((*ptr & 0x02))	hex[7]='1';	//set bit 1
+		if ((*ptr & 0x01))	hex[8]='1';	//set bit 1
+		printf("%s\t",hex);
+		ptr++;
+		cnt++;
+	}
 }
 
 //	bitmap 64bit get
 int	BitMap_getBytes(BitMap* this, int pos_bit){
+	int* tmp = (int*)(this->buffer);
+	return tmp[(pos_bit/64)-(!pos_bit%64)];
 }

@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=--std=gnu99 -Wall -D_LIST_DEBUG_
 
-OBJS=objs/buddy.o
+OBJS=objs/bitmap.o
 
 BINS=test
 
@@ -9,12 +9,13 @@ BINS=test
 
 all:	$(BINS)
 
-test:	buddytest.c $(OBJS)
+test:	bitmaptest.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 	./$@
 
-%.o:	%.c
-	$(CC) $(CFLAGS) -o $@ $<
+objs/%.o:	%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:	
-	rm -rf *.o
+	rm -rf objs/*.o
+	rm -rf test
