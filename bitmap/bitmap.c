@@ -2,13 +2,6 @@
 #include "color.h"
 
 
-#define	RESET	"\033[0m"
-#define	YELLOW	"\033[38;2;255;255;0m"
-#define	RED	"\033[38;2;255;0;0m"
-#define	BLUE	"\033[38;2;0;0;255m"
-#define	GREEN	"\033[38;2;0;255;0m"
-#define	ORANGE	"\033[38;2;255;127;0m"
-#define	PURPLE	"\033[38;2;255;0;255m"
 
 #include <stdio.h>
 
@@ -22,7 +15,7 @@ void	BitMap_init(BitMap* this, int num_bits, uint8_t* buffer){
 //	bitmap set
 void	BitMap_set(BitMap* this, int pos_bit, uint8_t status){
 	//shit test success
-	if (!this)
+	if (!this || !pos_bit)
 		return;
 	if (this->num_bits < pos_bit)
 		return;
@@ -30,51 +23,51 @@ void	BitMap_set(BitMap* this, int pos_bit, uint8_t status){
 	switch (pos_bit%8){
 		case 0:			//8^ bit, slide back: 0000-0001 & 1111-1110 (01 & fe)
 			if (status)
-				this->buffer[pos_bit/8 -1] |= 0x01;
+				this->buffer[(pos_bit/8) -1] |= 0x01;
 			else
-				this->buffer[pos_bit/8 -1] &= 0xfe;
+				this->buffer[(pos_bit/8) -1] &= 0xfe;
 			return;
 		case 1:			//1^ bit: 1000-0000 & 0111-1111 (80 & 7f)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x80;
+				this->buffer[pos_bit/8] |= 0x80;
 			else
-				this->buffer[pos_bit/8 ] &= 0x7f;
+				this->buffer[pos_bit/8] &= 0x7f;
 			return;
 		case 2:			//2^ bit: 0100-0000 & 1011-1111 (40 & bf)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x40;
+				this->buffer[pos_bit/8] |= 0x40;
 			else
-				this->buffer[pos_bit/8 ] &= 0xbf;
+				this->buffer[pos_bit/8] &= 0xbf;
 			return;
 		case 3:			//3^ bit: 0010-0000 & 1101-1111 (20 & df)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x20;
+				this->buffer[pos_bit/8] |= 0x20;
 			else
-				this->buffer[pos_bit/8 ] &= 0xdf;
+				this->buffer[pos_bit/8] &= 0xdf;
 			return;
 		case 4:			//4^ bit: 0001-0000 & 1110-1111 (10 & ef)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x10;
+				this->buffer[pos_bit/8] |= 0x10;
 			else
-				this->buffer[pos_bit/8 ] &= 0xef;
+				this->buffer[pos_bit/8] &= 0xef;
 			return;
 		case 5:			//5^ bit: 0000-1000 & 1111-0111 (08 & f7)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x08;
+				this->buffer[pos_bit/8] |= 0x08;
 			else
-				this->buffer[pos_bit/8 ] &= 0xf7;
+				this->buffer[pos_bit/8] &= 0xf7;
 			return;
 		case 6:			//6^ bit: 0000-0100 & 1111-1011 (04 & fb)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x04;
+				this->buffer[pos_bit/8] |= 0x04;
 			else
-				this->buffer[pos_bit/8 ] &= 0xfb;
+				this->buffer[pos_bit/8] &= 0xfb;
 			return;
 		case 7:			//7^ bit: 0000-0010 & 1111-1101 (02 & fd)
 			if (status)
-				this->buffer[pos_bit/8 ] |= 0x02;
+				this->buffer[pos_bit/8] |= 0x02;
 			else
-				this->buffer[pos_bit/8 ] &= 0xfd;
+				this->buffer[pos_bit/8] &= 0xfd;
 			return;
 	}
 }
@@ -119,7 +112,7 @@ void	BitMap_print(BitMap* this){
 	int cnt = 0;
 	while (1) {
 		if (cnt==this->buffer_size)
-			return;
+			break;
 		if (!(cnt%4))
 			printf("\n\t");
 		char hex[9]="0000 0000";
@@ -135,10 +128,11 @@ void	BitMap_print(BitMap* this){
 		ptr++;
 		cnt++;
 	}
+	printf("\n");
 }
 
 //	bitmap 64bit get
 int	BitMap_getBytes(BitMap* this, int pos_bit){
 	int* tmp = (int*)(this->buffer);
-	return tmp[(pos_bit/64)-(!pos_bit%64)];
+	return tmp[(pos_bit/32)-(!pos_bit%32)];
 }

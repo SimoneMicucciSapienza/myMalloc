@@ -2,3 +2,4 @@ tags
 test
 color/colortest.c
 *.swp
+.gitcommand
