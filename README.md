@@ -22,6 +22,7 @@ To implement this function we need some data structure to register the allocated
 
 ### bitmap
 
+
 ### buddy allocator
 
 ### slab allocator
