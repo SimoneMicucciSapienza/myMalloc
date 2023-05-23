@@ -1,8 +1,8 @@
 #include "bitmap.h"
 #include "color.h"
 
-
-
+#include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
 
 //	bitmap init
@@ -132,7 +132,21 @@ void	BitMap_print(BitMap* this){
 }
 
 //	bitmap 64bit get
-int	BitMap_getBytes(BitMap* this, int pos_bit){
+uint32_t	BitMap_getBytes(BitMap* this, int pos_bit){
+	//shit test (whitout mercy :-D )
+	if (!this){
+		//sadly I din't find any other way to comunicate a significative message over kill program
+		fprintf(STDERR_FILENO,"%sERROR%s null pointer exception\n",RED,RESET);
+		raise(SIGKILL);
+		pause();
+	}
+	if (this->num_bits<pos_bit){
+		//sadly I din't find any other way to comunicate a significative message over kill program
+		fprintf(STDERR_FILENO,"%sERROR%s request out of boundaries\n",ORANGE,RESET);
+		raise(SIGKILL);
+		pause();
+	}
+	//not this big trouble, require testing in the user to check fast scanning
 	int* tmp = (int*)(this->buffer);
-	return tmp[(pos_bit/32)-(!pos_bit%32)];
+	return tmp[(pos_bit/32)-(!(pos_bit%32))];
 }

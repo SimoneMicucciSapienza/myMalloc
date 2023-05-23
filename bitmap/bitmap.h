@@ -36,7 +36,7 @@ uint8_t	BitMap_get(BitMap* this, int pos_bit);
 void	BitMap_print(BitMap* this);
 
 //	bitmap 64bit get
-int	BitMap_getBytes(BitMap* this, int pos_bit);
+uint32_t	BitMap_getBytes(BitMap* this, int pos_bit);
 
 /*
  * 	0001	0010	0100	1000
