@@ -1,5 +1,7 @@
 #pragma once
 
+#include "bitmap.h"
+
 // definition meaning word
 #define NULL ((void*)0)
 #define MEMFAIL ((void*) -1)
@@ -9,15 +11,15 @@
 
 /* 
  * 1MiB to be allocated
- * granularity of 64B
- * deepness of 14 level
+ * fixed deepness
+ * granularity from 1024B to 64B
  **/
 typedef struct buddy {
-	void* bitmap;
+	bitmap*	bitmap;
 	void* pool;
 } buddy;
 
-int	MemoryInit();
+int	MemoryInit(void* hugepage);
 int	MemoryDestroy();
 void*	AllocBuddy(unsigned long size);
 void	FreeBuddy(void* buddy);
