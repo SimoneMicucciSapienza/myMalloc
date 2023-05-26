@@ -26,3 +26,13 @@ To implement this function we need some data structure to register the allocated
 ### buddy allocator
 
 ### slab allocator
+
+### memory helper
+keep the pointer to head of linked list made of pages as void\* array and the current size.  
+the page is mapped and work as an array of 1024 element, free element are setted at a value of -1, the last element point to next page.  
+the location of pointer is at responsability of caller.
+
+the init set the head with a map, the size to 0, require the address of struct location.
+the alloc wrap a mmap and do bookkeeping with the struct.
+the free wrap a munmap and match bookkeeping from the struct.
+the destroy free all the pending address and the list progressively.
