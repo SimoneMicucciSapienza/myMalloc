@@ -15,8 +15,8 @@ all:	$(BINS)
 objs/%.o:	%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-clean:
+clear:
 	rm -rf $(OBJS) $(BINS)
 
-rum:	$(BINS)
+run:	$(BINS)
 	./$<

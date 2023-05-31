@@ -5,20 +5,19 @@
 #define	MEM_ERR		((void*)-1)
 #define	MEM_FREE	((void*)0)
 
-/*
- * bookkeeping for memory mapping
- * bookkeeper is a page with doubling space and copy on demand
- * in short is a big "void*" array allocated with a mmap
- *
- * this consent to keep track of wrong address to free and to destroy stuff after end of process
- *
- * */
+//	page representation for munmap
+typedef	struct {
+	void*		addr;
+	uint64_t	bytes;
+} page;
+//	redefine the page pointer to identify arrays
+typedef	page*	pagePtr;
+//	memory listhead
 typedef struct {
-	void**	bookkeeper;
+	pagePtr		first;
+	pagePtr		last;
 	uint64_t	size;
 } mhelper;
-
-mhelper	handler
 
 //	initialize 4 page for the bookkeeper space
 void	mhelper_create(mhelper* this);
