@@ -1,7 +1,8 @@
 CC=gcc
 CFLAGS=--std=gnu99 -Wall -D_LIST_DEBUG_
 
-OBJS=objs/slab.o
+OBJS=objs/slab.o\
+     objs/bitmap.o
 
 BINS=.test
 
