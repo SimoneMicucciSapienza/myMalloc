@@ -8,6 +8,9 @@ BINS=.test
 
 .PHONY:	all clean run
 
+run:	$(BINS)
+	./$<
+
 all:	$(BINS)
 
 .test:	slabtest.c $(OBJS)
@@ -18,6 +21,3 @@ objs/%.o:	%.c
 
 clean:	
 	rm -rf $(OBJS) $(BINS)
-
-run:	$(BINS)
-	./$<

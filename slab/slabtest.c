@@ -5,30 +5,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static inline uint32_t _ltob_32(uint32_t a){
-	char *swp = (char*)&a, buff;
-	buff = swp[0];
-	swp[0] = swp[3];
-	swp[3] = buff;
-	buff = swp[1];
-	swp[1] = swp[2];
-	swp[2] = buff;
-	return a;
-}
-
 int main(int argv,char* argc[]){
-	BitMap map;
-	BitMap_init(&map,128,malloc(4*sizeof(uint32_t)));
+	bitmap map;
+	bitmap_init(&map,128,malloc(4*sizeof(uint32_t)));
 	slab slab;
-	slabInit(&slab,malloc(128*sizeof(uint32_t)),map,128*sizeof(uint32_t),sizeof(uint32_t));
-	printf("%08x\t%08x\n",0x01020304,_ltob_32(0x01020304));
-	slabAlloc(&slab);
-	slabAlloc(&slab);
-	slabAlloc(&slab);
-	slabAlloc(&slab);
-	slabAlloc(&slab);
-	slabAlloc(&slab);
-	slabAlloc(&slab);
-	slabAlloc(&slab);
+	slabInit(
+			&slab,
+			malloc(128*sizeof(uint32_t)),
+			map,
+			128*sizeof(uint32_t),
+			sizeof(uint32_t));
+
+	printf("\033[2Jallocation test:\n\n"); /*jedy mind trick to clear screen*/
+	void* ptr[32];
+	for (uint8_t i = 0; i<32; i++) {
+		ptr[i] = slabAlloc(&slab);
+		printf("%s%p%s\n",ORANGE,ptr[i],RESET);
+	}
+
+	printf("deallocation test:\n\n");
+	for (int8_t i=0; i<32; i++) {
+		uint8_t res=slabFree(&slab, ptr[31-i]);
+		printf("iteration %s%2d%s, return %s%2d%s\n",YELLOW,i,RESET,YELLOW,res,RESET);
+	}
 	return 0;
 }

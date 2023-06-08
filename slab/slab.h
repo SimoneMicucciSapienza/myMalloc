@@ -4,11 +4,12 @@
 #include "bitmap.h"
 
 typedef struct slab {
-	void*	buffer;
-	BitMap	bitmap;
-	uint8_t	slab_size;
+	void*		buffer;
+	bitmap		bitmap;
+	uint32_t	slab_elem;
+	uint8_t		slab_size;
 } slab;
 
-void	slabInit(slab* this, void* buffer,BitMap bitmap, uint32_t buffersize, uint8_t slabsize);
+void	slabInit(slab* this, void* buffer,bitmap bitmap, uint32_t buffersize, uint8_t slabsize);
 void*	slabAlloc(slab* this);
-void	slabFree(slab* this, void* ptr);
+uint8_t	slabFree(slab* this, void* ptr);
