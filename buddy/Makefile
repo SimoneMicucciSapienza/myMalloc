@@ -1,21 +1,19 @@
 CC=gcc
-CFLAGS=--std=gnu99 -Wall -D_LIST_DEBUG_
+CFLAGS=--std=gnu99 -Wall 
 
 OBJS=objs/buddy.o\
-     objs/bitmap
+     objs/bitmap.o
 
 BINS=.test
 
-.PHONY:	all clean run
+.PHONY:	clean run debug
 
-all:	$(BINS)
+debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1
+debug:	$(BINS)
+	./$<
 
 .test:	buddytest.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
-
-objs/bitmap:	
-	make -C ../bitmap/ all
-	ln -s ../bitmap/objs/bitmap.o
 
 objs/%.o:	%.c
 	$(CC) $(CFLAGS) -c -o $@ $<

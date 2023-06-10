@@ -20,19 +20,10 @@ typedef struct {
 	uint32_t	num_bits;
 } bitmap;
 
-//	bitmap init
 void	bitmap_init(bitmap* this, int num_bits, uint8_t* buffer);
-
-//	bitmap set
 void	bitmap_set(bitmap* this, int pos_bit, uint8_t status);
-
-//	bitmap get
 uint8_t	bitmap_get(bitmap* this, int pos_bit);
-
-//	bitmap print
 void	bitmap_print(bitmap* this);
-
-//	bitmap 64bit get
 uint32_t	bitmap_getBytes(bitmap* this, int pos_bit);
 
 /*

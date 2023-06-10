@@ -7,4 +7,8 @@
 #define	BLUE	"\033[38;2;0;0;255m"
 #define	GREEN	"\033[38;2;0;255;0m"
 #define	ORANGE	"\033[38;2;255;127;0m"
-#define	PURPLE	"\033[38;2;255;0;255m"
+#define	PURPLE	"\033[38;2;63;0;255m"
+
+#define	CYAN	"\033[38;2;0;255;127m"
+#define	AZURE	"\033[38;2;0;127;255m"
+#define	MAGENTA	"\033[38;2;255;0;255m"
