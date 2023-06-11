@@ -29,6 +29,15 @@ static inline uint8_t _get_level_from_size(uint32_t block_size){
 	#endif
 	return res;
 }
+/*	from the block number return the current level of buddy request*/
+static inline uint8_t _get_level_from_block(uint32_t block_number){
+	uint8_t res=0;
+	while (block_number){
+		block_number = block_number>>1;
+		res++;
+	}
+	return res;
+}
 /*	get relative 0 block*/
 static inline uint32_t _get_first_of_level(uint8_t level){
 	return (1<<(level-1));
@@ -52,10 +61,8 @@ static inline void _print_bytes(uint32_t target){
 	char* prt = (char*)(&target);
 	printf("\t");
 	for (uint8_t i = 0; i<32;i++){
-		if (i!=0 && (i%8)==0)	prt++;
-		printf("%d",((*prt) & print_mask[i%8])?1:0);
+		printf("%d",(prt[3-(i/8)] & print_mask[i%8])?1:0);
 		if (i%4==3)	printf(" ");
-		target = target << 1;
 	}
 	printf("\n");
 }
@@ -65,30 +72,91 @@ static inline int _get_bitmap_offset(bitmap *bitmap, uint32_t start, uint32_t en
 	uint32_t bitmap_chunk = _reverse_endianness(bitmap_getBytes(bitmap, start - BITMAP_BIAS));
 	uint32_t offset = 0, max_offset = end - start;
 	while (bitmap_chunk == 0xffffffff){
+		#if _VERBOSE_
+		printf("\t%s%04d%s: ",AZURE,offset,RESET);
+		_print_bytes(bitmap_chunk);
+		#endif
 		offset +=32;
 		bitmap_chunk = _reverse_endianness(bitmap_getBytes(bitmap, start - BITMAP_BIAS + offset));
-		#if _VERBOSE_
-		_print_bytes(bitmap_chunk);
-		#endif
 	}
 	while (bitmap_chunk>0x7fffffff && bitmap_chunk){
-		bitmap_chunk = bitmap_chunk << 1;
-		offset++;
 		#if _VERBOSE_
-		printf("%s%04d%s:\t",AZURE,bitmap_chunk,RESET);
+		printf("\t%s%04d%s: ",AZURE,offset,RESET);
 		_print_bytes(bitmap_chunk);
 		#endif
+		bitmap_chunk = bitmap_chunk << 1;
+		offset++;
 	}
 	if (offset > max_offset)
 		return FAILURE;
 	return offset;
 }
-/*	set bitmap helper*/
-static inline void _set_bitmap_biased(buddy* this, int buddy_num, uint8_t status){
-	bitmap_set(&(this->bitmap),buddy_num - BITMAP_BIAS, status);
+/*	set bitmap helper wt parent and child setting*/
+static inline void _set_bitmap(buddy* this, int buddy_num, uint8_t status){
+	/*	set requirment to iterate	*/
+	uint32_t queue[32];	/*	extra to max number of child for this specific buddy	*/
+	uint8_t queue_head = 0,
+		queue_tail = 0,
+		queue_size = 0;	/*	queue element required to manage it	*/
+	/*	set to queue current buddy and manage setting	*/
+	queue[queue_tail] = buddy_num;
+	queue_size++;	queue_tail = (queue_tail+1)%32;		/*	push elem to queue	*/
+	/*	allocation parent circuit	*/
+	if (status){
+		uint8_t parent_level = _get_level_from_block(buddy_num);	/*get level of current block*/
+		while (parent_level>10){	/*level 10 buddy is not avaible by setting*/
+			bitmap_set(&(this->bitmap),queue[queue_head] - BITMAP_BIAS, status);	/*set current queue head*/
+			#if _VERBOSE_
+				printf("%s%04d(%1d)%s ",MAGENTA,queue[queue_head]-BITMAP_BIAS,(status),RESET);
+			#endif
+			if (--parent_level>10){	/* preincrement to reduce lines	*/
+				queue[queue_tail] = queue[queue_head] >> 1;		/*	set parent to queue	*/
+				queue_size++;	queue_tail = (queue_tail+1)%32;		/*	push elem to queue	*/
+			}
+			queue_size--;	queue_head = (queue_head+1)%32;		/*	draw elem to queue	*/
+		}
+	}
+	/*	deallocation parent circuit	*/
+	else {
+		uint8_t parent_level = _get_level_from_block(buddy_num);	/*get level of current block*/
+		while (parent_level>11){	/*level 10 buddy is not avaible by setting*/
+			uint32_t buddy = queue[queue_head] + ((queue[queue_head]%2)? 1 : -1);
+			bitmap_set(&(this->bitmap),queue[queue_head] - BITMAP_BIAS, status);	/*set current queue head*/
+			#if _VERBOSE_
+				printf("%s%04d(%1d)%s ",MAGENTA,queue[queue_head]-BITMAP_BIAS,(status),RESET);
+			#endif
+			if (++parent_level>11){	/* preincrement to reduce lines	*/
+				if (bitmap_get(&(this->bitmap),buddy-BITMAP_BIAS)){	/*	if buddy to 1	*/
+					queue_size--;	queue_head = (queue_head+1)%32;		/*	draw elem to queue	*/
+					break;		/*	bookkeeping of structure after break	*/
+				}
+				queue[queue_tail] = queue[queue_head] >> 1;		/*	set parent to queue	*/
+				queue_size++;	queue_tail = (queue_tail+1)%32;		/*	push elem to queue	*/
+			}
+			queue_size--;	queue_head = (queue_head+1)%32;		/*	draw elem to queue	*/
+		}
+	}
 	#if _VERBOSE_
-	printf("%s%04d%s ->\t",MAGENTA,buddy_num - BITMAP_BIAS,RESET);
-	_print_bytes(_reverse_endianness(bitmap_getBytes(&(this->bitmap),buddy_num - BITMAP_BIAS)));
+		printf("%s(parents ended)%s\n",PURPLE,RESET);
+	#endif
+	/*	child set circuit	*/
+	queue[queue_tail] = buddy_num;
+	queue_size++;	queue_tail = (queue_tail+1)%32;		/*	push elem to queue	*/
+	while (queue_size){	/*	child setting	*/
+		bitmap_set(&(this->bitmap),queue[queue_head] - BITMAP_BIAS, status);	/*set current queue head*/
+		#if _VERBOSE_
+			printf("%s%04d(%1d)%s ",MAGENTA,queue[queue_head]-BITMAP_BIAS,(status),RESET);
+		#endif
+		if (_get_level_from_block(queue[queue_head])<=MAX_LEVEL){
+			queue[queue_tail] = queue[queue_head]<<1;
+			queue_size++;	queue_tail = (queue_tail+1)%32;		/*	push elem to queue	*/
+			queue[queue_tail] = (queue[queue_head]<<1) + 1;
+			queue_size++;	queue_tail = (queue_tail+1)%32;		/*	push elem to queue	*/
+		}
+		queue_size--;	queue_head = (queue_head+1)%32;		/*	push elem to queue	*/
+	}
+	#if _VERBOSE_
+		printf("%s(children ended)%s\n",PURPLE,RESET);
 	#endif
 }
 /*	get size of level*/
@@ -102,7 +170,7 @@ static inline uint32_t _get_level_block_size(uint8_t level){
 int	buddy_init(buddy* this, void* pool, void* bitmap_buffer){
 	if (!this||!pool||!bitmap_buffer)	return -1;	/*test valid input*/
 	this->pool = pool;
-	bitmap_init(&(this->bitmap), 1024*((2^5)-1), bitmap_buffer);
+	bitmap_init(&(this->bitmap), 1024*(31), bitmap_buffer);
 	return 0;
 }
 
@@ -116,7 +184,7 @@ void*	buddy_alloc(buddy* this, uint32_t size){
 	void* block = this->pool;
 	block += offset*_get_level_block_size(level);
 	*(uint32_t*)(block)=base+offset;
-	_set_bitmap_biased(this, base+offset, 1);
+	_set_bitmap(this, base+offset, 1);
 	return block+sizeof(uint32_t);
 }
 

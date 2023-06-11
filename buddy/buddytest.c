@@ -31,11 +31,11 @@ int main(void){
 			GREEN,buddy,RESET);
 	#endif
 	buddy_init(buddy, pool, buffer);
-	for(uint8_t i=0;i<16;i++){
-		printf("\033[1mallocation number: \033[38;2;0;127;255m%d\033[0;1m\tsize allocated: \033[38;2;255;127;0m%4d\033[0m\n",i,1000);
-		printf("\033[4;38;2;255;255;0m%p\033[0m\n",buddy_alloc(buddy,1000));
-		if (i) break;
+	uint32_t ssizee = 500;
+	for(uint8_t i=0;i<64;i++){
+		printf("\033[1mallocation number: \033[38;2;0;127;255m%d\033[0;1m\tsize allocated: \033[38;2;255;127;0m%4d\033[0m\n",i,ssizee);
+		printf("\033[4;38;2;255;255;0m%p\033[0m\n",buddy_alloc(buddy,ssizee));
 	}
-	//bitmap_print(&(buddy->bitmap));
+	bitmap_print(&(buddy->bitmap));
 	return 0;
 }

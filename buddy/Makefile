@@ -20,6 +20,7 @@ objs/%.o:	%.c
 
 clean:	
 	rm -rf *.o
+	rm .test
 
 run:	$(BINS)
 	./$<
