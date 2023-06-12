@@ -1,10 +1,10 @@
-#if _VERBOSE_
 #include <stdio.h>
-#include "color.h"
-#endif
 #include <stdint.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "buddy.h"
+#include "color.h"
 
 /*
  * inline helpers functions
@@ -72,18 +72,10 @@ static inline int _get_bitmap_offset(bitmap *bitmap, uint32_t start, uint32_t en
 	uint32_t bitmap_chunk = _reverse_endianness(bitmap_getBytes(bitmap, start - BITMAP_BIAS));
 	uint32_t offset = 0, max_offset = end - start;
 	while (bitmap_chunk == 0xffffffff){
-		#if _VERBOSE_
-		printf("\t%s%04d%s: ",AZURE,offset,RESET);
-		_print_bytes(bitmap_chunk);
-		#endif
 		offset +=32;
 		bitmap_chunk = _reverse_endianness(bitmap_getBytes(bitmap, start - BITMAP_BIAS + offset));
 	}
 	while (bitmap_chunk>0x7fffffff && bitmap_chunk){
-		#if _VERBOSE_
-		printf("\t%s%04d%s: ",AZURE,offset,RESET);
-		_print_bytes(bitmap_chunk);
-		#endif
 		bitmap_chunk = bitmap_chunk << 1;
 		offset++;
 	}
@@ -166,6 +158,11 @@ static inline uint32_t _get_level_block_size(uint8_t level){
 		bytes = bytes<<1;
 	return bytes;
 }
+/*		*/
+static inline uint8_t _check_boundaries(buddy* this,void* test){
+	void *start = this->pool, *end = start+(1<<20);
+	return (test<start||test>end);
+}
 
 int	buddy_init(buddy* this, void* pool, void* bitmap_buffer){
 	if (!this||!pool||!bitmap_buffer)	return -1;	/*test valid input*/
@@ -188,4 +185,24 @@ void*	buddy_alloc(buddy* this, uint32_t size){
 	return block+sizeof(uint32_t);
 }
 
-void	buddy_free(buddy* this, void* memory);
+void	buddy_free(buddy* this, void* memory){
+	/*	check validity of pointer	*/
+	if (_check_boundaries(this,memory)){
+		dprintf(STDERR_FILENO,"%sERROR%s pointer out of boudaries exception\n",RED,RESET);
+		raise(SIGKILL);		/*	be hard with error on memory managment	*/
+		pause();
+	}
+	/*	get the block position	*/
+	memory -= sizeof(uint32_t);
+	uint32_t block = *(uint32_t*)(memory);
+	/*	check block validity	*/
+	uint8_t level = _get_level_from_block(block);
+	uint32_t offset = block - _get_first_of_level(level);
+	if (memory!=(this->pool + offset*_get_level_block_size(level))){
+		dprintf(STDERR_FILENO,"%sERROR%s pointer not aligned exception\n",RED,RESET);
+		raise(SIGKILL);		/*	be hard with error on memory managment	*/
+		pause();
+	}
+	/*	after this hard check we can update bitmap	*/
+	_set_bitmap(this, block, 0);
+}

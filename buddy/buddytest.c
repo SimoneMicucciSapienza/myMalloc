@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "buddy.h"
 #include "color.h"
@@ -31,11 +32,37 @@ int main(void){
 			GREEN,buddy,RESET);
 	#endif
 	buddy_init(buddy, pool, buffer);
-	uint32_t ssizee = 500;
-	for(uint8_t i=0;i<64;i++){
+	sleep(1);
+	uint32_t ssizee = 200;
+	printf("\033[4;38;2;255;255;0m%p\033[0m\n",buddy_alloc(buddy,50));
+	uint8_t round = 32;
+	void* allocation[round];
+	for(uint8_t i=0;i<round;i++){
 		printf("\033[1mallocation number: \033[38;2;0;127;255m%d\033[0;1m\tsize allocated: \033[38;2;255;127;0m%4d\033[0m\n",i,ssizee);
-		printf("\033[4;38;2;255;255;0m%p\033[0m\n",buddy_alloc(buddy,ssizee));
+		allocation[i] = buddy_alloc(buddy,ssizee);
+		printf("\033[4;38;2;255;255;0m%p\033[0m\n",allocation[i]);
+		sleep(1);
 	}
+	sleep(10);
 	bitmap_print(&(buddy->bitmap));
+	sleep(1);
+	for(uint8_t i=0;i<round;i++){
+		if (i%2)	continue;
+		printf("\033[1mdeallocation number: \033[38;2;0;127;255m%d\033[0m\n",i);
+		buddy_free(buddy,allocation[i]);
+		sleep(1);
+	}
+	sleep(10);
+	bitmap_print(&(buddy->bitmap));
+	sleep(1);
+	for(uint8_t i=0;i<round;i++){
+		if (!(i%2))	continue;
+		printf("\033[1mdeallocation number: \033[38;2;0;127;255m%d\033[0m\n",i);
+		buddy_free(buddy,allocation[i]);
+		sleep(1);
+	}
+	sleep(10);
+	bitmap_print(&(buddy->bitmap));
+	sleep(1);
 	return 0;
 }
