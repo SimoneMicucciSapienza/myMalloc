@@ -15,28 +15,16 @@
 //	Pos:	1 2 3 4	5 6 7 8		1 2 3 4	5 6 7 8		1 2 3 4	5 6 7 8		1 2 3 4	5 6 7 8
 //	Map:	1 2 3 4	5 6 7 8		9 10111213141516	1718192021222324	2526272829303132
 typedef struct {
-	uint8_t	*buffer;
-	int	buffer_size;
-	int	num_bits;
-} BitMap;
+	uint8_t*	buffer;
+	uint32_t	buffer_size;
+	uint32_t	num_bits;
+} bitmap;
 
-//	bitmap init
-void	BitMap_init(BitMap* this, int num_bits, uint8_t* buffer);
-
-//	bitmap set
-void	BitMap_set(BitMap* this, int pos_bit, uint8_t status);
-
-//	bitmap get
-uint8_t	BitMap_get(BitMap* this, int pos_bit);
-
-//	bitmap destroy
-//void	BitMap_destroy(BitMap* this);	//how can I destroy if I don't initialize the pointer?
-
-//	bitmap print
-void	BitMap_print(BitMap* this);
-
-//	bitmap 64bit get
-uint32_t	BitMap_getBytes(BitMap* this, int pos_bit);
+void	bitmap_init(bitmap* this, int num_bits, uint8_t* buffer);
+void	bitmap_set(bitmap* this, int pos_bit, uint8_t status);
+uint8_t	bitmap_get(bitmap* this, int pos_bit);
+void	bitmap_print(bitmap* this);
+uint32_t	bitmap_getBytes(bitmap* this, int pos_bit);
 
 /*
  * 	0001	0010	0100	1000
