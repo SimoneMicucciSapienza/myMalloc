@@ -77,9 +77,9 @@ void	bitmap_print(bitmap* this){
 	while (1) {
 		if (cnt==this->buffer_size)
 			break;
-		if (!(cnt%4))
+		if (!(cnt%16))
 			printf("\n\t");
-		char hex[9]="0000 0000";
+		char hex[9]="0000-0000";
 		if ((*ptr & 0x80))	hex[0]='1';	//set bit 1
 		if ((*ptr & 0x40))	hex[1]='1';	//set bit 1
 		if ((*ptr & 0x20))	hex[2]='1';	//set bit 1
@@ -88,7 +88,7 @@ void	bitmap_print(bitmap* this){
 		if ((*ptr & 0x04))	hex[6]='1';	//set bit 1
 		if ((*ptr & 0x02))	hex[7]='1';	//set bit 1
 		if ((*ptr & 0x01))	hex[8]='1';	//set bit 1
-		printf("%s\t",hex);
+		printf("%s  ",hex);
 		ptr++;
 		cnt++;
 	}

@@ -1,21 +1,26 @@
 CC=gcc
-CFLAGS=--std=gnu99 -Wall -D_LIST_DEBUG_
+CFLAGS=--std=gnu99 -Wall 
 
-OBJS=objs/buddy.o
+OBJS=objs/buddy.o\
+     objs/bitmap.o
 
-BINS=test
+BINS=.test
 
-.phony:	all clean
+.PHONY:	clean run debug
 
-all:	$(BINS)
+debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1
+debug:	$(BINS)
+	./$<
 
-test:	buddytest.c $(OBJS)
+.test:	buddytest.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
-	./$@
 
-# who the heck knew the "-c" remove the "main" function request, lmao
-%.o:	%.c
+objs/%.o:	%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:	
 	rm -rf *.o
+	rm .test
+
+run:	$(BINS)
+	./$<

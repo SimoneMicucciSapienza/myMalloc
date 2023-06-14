@@ -1,23 +1,30 @@
 #pragma once
 
+#include "bitmap.h"
+
 // definition meaning word
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 #define MEMFAIL ((void*) -1)
 #define SUCCESS	0
 #define FAILURE	-1
 
+/* useful macro for default buddy*/
+#define	BITMAP_BIAS	1024
+#define	MAX_LEVEL	14
+#define	MIN_SIZE	64
 
 /* 
  * 1MiB to be allocated
- * granularity of 64B
- * deepness of 14 level
+ * fixed deepness
+ * granularity from 1024B to 64B
  **/
 typedef struct buddy {
-	void* bitmap;
-	void* pool;
+	void*	pool;
+	bitmap	bitmap;
 } buddy;
 
-int	MemoryInit();
-int	MemoryDestroy();
-void*	AllocBuddy(unsigned long size);
-void	FreeBuddy(void* buddy);
+int	buddy_init(buddy* this, void* pool, void* bitmap_buffer);
+void*	buddy_alloc(buddy* this, uint32_t size);
+void	buddy_free(buddy* this, void* memory);
