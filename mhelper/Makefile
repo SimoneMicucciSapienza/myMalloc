@@ -1,13 +1,15 @@
 CC=gcc
-CFLAGS=--std=gnu99 -Wall -D_LIST_DEBUG_
-
-BINS=.test
+CFLAGS=--std=gnu99 -Wall 
 
 OBJS=objs/mhelper.o
 
-.PHONY:	all clear run
+BINS=.test
 
-all:	$(BINS)
+.PHONY:	clear run debug
+
+debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1
+debug:	$(BINS)
+	./$<
 
 .test:	mhelpertest.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
