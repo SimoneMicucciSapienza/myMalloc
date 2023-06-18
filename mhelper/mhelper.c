@@ -9,12 +9,15 @@
 #define map(size)\
 	(mmap(NULL,size,PROT_WRITE|PROT_READ,MAP_PRIVATE|MAP_ANONYMOUS,-1,0))
 
+/*	static inline function helper	*/
+/*	custom quick memset (aovid cstd)	*/
 static inline void memset_(void* target, uint64_t size, char value) {
 	char* tmp = (char*) target;
 	while (size--){
 		*tmp++ = value;
 	}
 }
+/*	helper to add elem to linked list	*/
 static inline void set_last_spot(mhelper* this, void* addr, uint64_t size){
 	uint64_t rel_size = this->size % 255;
 	page* rel_page = this->tail;
@@ -32,6 +35,20 @@ static inline void set_last_spot(mhelper* this, void* addr, uint64_t size){
 	mem t = {addr,size};
 	(rel_page->allocation[rel_size]) = t;
 	this->size++;
+}
+/*	helper to pop (and remove) elem from linked list	*/
+static inline mem get_last_spot(mhelper* this){
+	mem res = this->tail->allocation[(this->size)%255], zero = {NULL,0};
+	if ((this->size)%255){
+		this->tail->allocation[(this->size)%255] = zero;
+		this->size--;
+		return res;
+	}
+	void* to_free = (void*)(this->last);
+	this->last = this->last->prev;
+	munmap(to_free,4096);
+	this->size--;
+	return res;
 }
 
 void	mhelper_create(mhelper* this){
