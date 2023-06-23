@@ -12,3 +12,4 @@
 #define	CYAN	"\033[38;2;0;255;127m"
 #define	AZURE	"\033[38;2;0;127;255m"
 #define	MAGENTA	"\033[38;2;255;0;255m"
+#define	GRAY	"\033[38:2;64;64;64m"
