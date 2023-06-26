@@ -4,7 +4,7 @@
 #include "mhelper.h"
 #include "color.h"
 
-#define	TEST	500
+#define	TEST	1
 #define	P_SIZE	2048
 
 #ifndef	_VERBOSE_
@@ -16,18 +16,18 @@ int main (int argc, char* argv[]) {
 	mhelper base,*this=&base;
 	mhelper_create(this);
 	void* addresses[TEST];
-	mhelper_print(this);
 	for (int i=0;i<TEST;i++){
-		printf("\033[1;4m%s%03d allocation%s : allocated %5d bytes\n",AZURE,i,RESET,P_SIZE);
+		printf("\033[1;4m%s%03d allocation%s :",AZURE,i,RESET);
 		addresses[i]=mhelper_alloc(this,P_SIZE);
+		printf("\n");
+		mhelper_print(this);
 	}
-	mhelper_print(this);
-	for (int i=0;i<TEST;i++){
-		printf("\033[1;4m%s%03d deallocation%s : %p\n",AZURE,i,RESET,addresses[i]);
+	for (int i=TEST-1;i>-1;i--){
+		printf("\033[1;4m%s%03d deallocation%s :",AZURE,i,RESET);
 		mhelper_free(this,addresses[i]);
+		printf("\n");
+		mhelper_print(this);
 	}
-	mhelper_print(this);
 	mhelper_destroy(this);
-	mhelper_print(this);
 	return 0;
 }

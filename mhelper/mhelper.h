@@ -21,10 +21,10 @@ typedef struct mhelper {
 	page*	head;
 	page*	tail;
 	uint64_t	size;
-} __attribute((packed)) mhelper;
+} __attribute__((packed)) mhelper;
 
 void	mhelper_create(mhelper* this);
 void	mhelper_destroy(mhelper* this);
 void*	mhelper_alloc(mhelper* this, uint64_t size);
 uint8_t	mhelper_free(mhelper* this, void* memory);
-void	mhelper_print(mhelper* this);
+volatile void	mhelper_print(mhelper* this);

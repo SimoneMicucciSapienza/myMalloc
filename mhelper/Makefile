@@ -7,7 +7,7 @@ BINS=.test
 
 .PHONY:	clear run debug
 
-debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1
+debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1 -ggdb
 debug:	$(BINS)
 	./$<
 

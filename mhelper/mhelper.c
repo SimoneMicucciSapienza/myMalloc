@@ -17,161 +17,155 @@ static inline void _memset_(void* target, uint64_t size, char value) {
 		*tmp++ = value;
 	}
 }
-/*	helper to add elem to linked list	*/
-static inline void _set_last_spot(mhelper* this, void* addr, uint64_t size){
-	uint64_t rel_size = this->size % 255;
-	/*	end of page case	*/
-	if (rel_size == 254){
-		this->tail->next = map(sizeof(page));	/*	set next on old page		*/
-		if (MAP_FAILED==(this->tail->next)){
-			dprintf(STDERR_FILENO,"%sERROR%s map failed exception\n",RED,RESET);
-			raise(SIGKILL);
-		}
-		_memset_(this->tail->next, sizeof(page), 0);
-		this->tail->next->prev = this->tail;	/*	set previous on new page	*/
-		#if _VERBOSE_
-		mhelper_print(this);
-		#endif
-		this->tail = this->tail->next;
+/*	make a quick handler page	*/
+static inline page* _getpage_(void){
+	page* res = (page*)map(4096);
+	if (res==MAP_FAILED){
+		dprintf(STDERR_FILENO,"%sERROR%s memory mapping failed\t",RED,RESET);
+		raise(SIGILL);
 	}
-	/*	set elem and adjust value	*/
-	mem t = {addr,size};
-	(this->tail->allocation[rel_size]) = t;
-	this->size++;
-	#if _VERBOSE_
-	printf("(page: %s%p%s displacement: %s%4ld%s)\n",CYAN,this->tail,RESET,GREEN,rel_size,RESET);
-	#endif
-}
-/*	helper to pop (and remove) elem from linked list	*/
-static inline mem _get_last_spot(mhelper* this){
-	/*	safe null elem case	*/
-	mem zero = {NULL,0};
-	if (!this->size)
-		return zero;
-	/*	start accounting to get last page	*/
-	this->size--;
-	mem res = this->tail->allocation[(this->size)%255];
-	/*	default case scenario	*/
-	if ((this->size)%255){
-		this->tail->allocation[(this->size)%255] = zero;
-#if _VERBOSE_
-		printf("\t%slast:%s%p%s\tsize:%s%ld%s\n",YELLOW,CYAN,res.address,YELLOW,AZURE,res.size,RESET);
-#endif
-		return res;
-	}
-	/*	change page scenario	*/
-	void* to_free = (void*)(this->tail);	/*	save current page	*/
-	if (!(this->tail->prev))
-		return res;	/*	if tail==head avoid removing	*/
-	this->tail = this->tail->prev;	/*	update tail	*/
-#if _VERBOSE_
-	printf("\t(tail:%p\ttarget:%p)\n",this->tail,to_free);
-#endif
-	munmap(to_free,4096);	/*	free page	*/
-#if _VERBOSE_
-	mhelper_print(this);
-	printf("\t%slast:%s%p%s\tsize:%s%ld%s\n",YELLOW,CYAN,res.address,YELLOW,AZURE,res.size,RESET);
-#endif
+	_memset_(res,4096,0x00);
 	return res;
 }
-/*	helper to find researched page	
- *	ATTENTION! mem will be used not as created but to pass address and displacement!	*/
-static inline mem _find_page_elem(mhelper* this, void* search){
-	page* curr_page = this->head;
-	while (1){
-		for(uint8_t i=0;i<255;i++){
-			if ((curr_page->allocation[i]).address==search){
-				mem ret = {curr_page,i};
-				return ret;
-			}
-		}
-		if (curr_page == this->tail)	break;
-		curr_page = curr_page->next;
+/*	set last memory elemeny in handler	*/
+static inline void _memory_push(mhelper* this,mem value){
+	//write in next page
+	if (!(this->size%255) && this->size){
+		if (!this->tail->next)	{	this->tail->next = _getpage_();	}
+		this->tail->next->prev = this->tail;
+		this->tail = this->tail->next;
 	}
-	mem ret = {NULL, 0};
-	return ret;
+	//set value
+	this->tail->allocation[this->size%255] = value;
+	//adjust handler structure
+	this->size++;
 }
-/*	unmap page and rewrite value	*/
-static inline uint8_t _free_and_substitute(page* page, uint8_t displacement, mem substitute){
-	mem temp = page->allocation[displacement];
-	uint8_t res = munmap(temp.address,temp.size);
-	page->allocation[displacement] = substitute;
+/*	get last memory elemeny from handler	*/
+static inline mem _memory_pop(mhelper* this){
+	//point to last allocated item
+	this->size--;
+	//adjust tail page pointer
+	if (!(this->size%255) && this->size){
+		this->tail = this->tail->prev;
+	}
+	//to be safe
+	if (!this->tail){
+		dprintf(STDERR_FILENO,"%sERROR%s structure linking failure\t",RED,RESET);
+		raise(SIGILL);
+	}
+	printf("%s(size:%3d->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
+	//minimal declaration
+	mem res;
+	const mem value = {NULL,0};
+	//saving value
+	res = this->tail->allocation[this->size%255];
+	//reset handler
+	this->tail->allocation[this->size%255] = value;
+	//return requested value
+	printf("%s(size:%3d->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
 	return res;
 }
 
 void	mhelper_create(mhelper* this){
-#if _VERBOSE_
-	printf("\\------------\\\n\033[4;6m%sCREATE HELPER%s\n\\------------\\\n\n",MAGENTA,RESET);
-#endif
-	if (!this)	return;
-	page* page0 = map(sizeof(page));
-	if (page0 == MAP_FAILED)	return;
-	this->head=this->tail=page0;
-	_memset_(this->head,sizeof(page),0);
 	this->size=0;
+	this->head=this->tail=_getpage_();
+	#if _VERBOSE_
+		printf("\n\033[4;5m%sCREATE MEMORY HELPER%s\n\n",MAGENTA,RESET);
+		mhelper_print(this);
+	#endif
 }
 void	mhelper_destroy(mhelper* this){
-	/*	make routine to unmap all memory on list	*/
-#if _VERBOSE_
-	printf("\\------------\\\n\033[4;6m%sDESTROY HELPER%s\n\\------------\\\n\n",MAGENTA,RESET);
-#endif
-	while(this->size){
-		mem res = _get_last_spot(this);
-printf("\033[4m%sWUH%s\n",YELLOW,RESET);
-		if (munmap(res.address,res.size)){
-			printf("address: %p\tsize: %ld\n",res.address,res.size);
-			dprintf(STDERR_FILENO,"%sERROR%s unmap exception\n",RED,RESET);
-			raise(SIGKILL);
-		}
-		#if _VERBOSE_
-		mhelper_print(this);
-		#endif
+	//free every allocated block
+	while (this->size){
+		mem target = _memory_pop(this);
+		munmap(target.address,target.size);
 	}
-	munmap(this->head,4096);
-	this->head = this->tail = NULL;
+	//free every handler page
+	page* iter = this->head;
+	while (iter!=NULL){
+		page* temp = iter;
+		iter = iter->next;
+		munmap(temp,4096);
+	}
+	//set real value to structure's pointer
+	this->head=this->tail=NULL;
+	#if _VERBOSE_
+		printf("\n\033[4;5m%sDESTROY MEMORY HELPER%s\n\n",MAGENTA,RESET);
+		mhelper_print(this);
+	#endif
+	//this->size=this->available=0;
 }
 void*	mhelper_alloc(mhelper* this, uint64_t size){
-	void* target = map(size);
-	if (MAP_FAILED==target){
-		dprintf(STDERR_FILENO,"%sERROR%s map failed exception\n",RED,RESET);
-		raise(SIGKILL);
+	//initialize value and update structure
+	mem value = {map(size),size};
+	_memory_push(this,value);
+	if (value.address==MAP_FAILED){
+		dprintf(STDERR_FILENO,"%sERROR%s memory mapping failed\t",RED,RESET);
+		raise(SIGILL);
 	}
 	#if _VERBOSE_
-	printf("\tallocate: %s%p%s ->\t",ORANGE,target,RESET);
+		printf("\t(%s%p%s,%s%8ld%s)",value.address?ORANGE:RED,value.address,RESET,YELLOW,value.size,RESET);
 	#endif
-	_set_last_spot(this,target,size);
-	return target;
+	return value.address;
 }
 uint8_t	mhelper_free(mhelper* this, void* memory){
-	mem ret = _find_page_elem(this,memory);
-	if (!(ret.address))	return -1;
-	if (ret.address == this->tail && ret.size == (this->size%255)){
-		mem target = _get_last_spot(this);
-#if _VERBOSE_
-		printf("\t%s(size :%4ld)%s\n",GREEN,this->size,RESET);
-#endif
-		return munmap(target.address,target.size);
-	} else {
-		uint8_t res = _free_and_substitute(ret.address,ret.size,_get_last_spot(this));
-		return res;
-	}
-}
-void	mhelper_print(mhelper* this){
-	printf("\n\\----------------print----------------\\\n");
-	printf("\thandler-> %s%p%s\n\t",this?ORANGE:RED,this,RESET);
-	if (!this)	return;
-	printf("head: %s%p%s tail: %s%p%s size:%s%4ld%s\n",YELLOW,this->head,RESET,YELLOW,this->tail,RESET,GREEN,this->size,RESET);
-	page* iterator = this->head;
-	printf("\t%s%p%s <= (head -->) %s%p%s <=> ",RED,(void*)(0),RESET,iterator?ORANGE:RED,iterator,RESET);
-	while(iterator){
-		printf("%s%p%s",iterator->next?ORANGE:RED,iterator->next,RESET);
-		if (iterator->next){
-			if (iterator->next->next)
-				printf(" <=> ");
-			else	printf(" (<-- tail) => ");
+	mem target = {NULL,0}, swap = _memory_pop(this);
+	volatile page *iter = this->head;
+	uint8_t relsize = 0,npage=0;
+	//find target memory
+	while (iter->allocation[relsize].address){
+		if ((iter->allocation[relsize]).address==memory){
+			target = iter->allocation[relsize];
+			break;
 		}
+		relsize++;
+		if (relsize==255){
+			iter = iter->next;
+			npage++;
+			relsize = 0;
+		}
+	}
+	#if _VERBOSE_
+		printf("\t(%s%p%s(%s%3d%s,%s%3d%s))",
+				target.address?ORANGE:RED,target.address,RESET,
+				GREEN,npage,RESET,
+				MAGENTA,relsize,RESET);
+	#endif
+	//free target
+	uint8_t res = munmap(target.address,target.size);
+	//substitute void value wt last
+	iter->allocation[relsize]=swap;
+	return res;
+}
+volatile void	mhelper_print(mhelper* this){
+	printf("\thandler: %s%p%s\n",this?ORANGE:RED,this,RESET);
+	if (!this)	return;
+	printf("\t\tsize: %s%ld%s\n",AZURE,this->size,RESET);
+	volatile page* iterator = this->head;
+	printf("\t\t");
+	while (iterator!=NULL){
+		if (iterator==this->head)	printf("(%shead%s)-> ",YELLOW,RESET);
+		printf("%s%p%s",iterator!=NULL?ORANGE:RED,iterator,RESET);
+		if (iterator==this->tail)	printf(" <-(%stail%s)",YELLOW,RESET);
+		if (iterator->next!=NULL)
+			printf(" <-> ");
 		iterator = iterator->next;
 	}
-	printf("\n\\-----------------end-------------------\\");
 	printf("\n\n");
+	#if _VERBOSE_
+		iterator = this->head;
+		uint8_t pos = 0;
+		while(1){
+			if (!pos)	printf("\n\t%s%p%s",YELLOW,iterator,RESET);
+			if (!iterator)	break;
+			if (!(pos%8))	printf("\n\t\t");
+			printf("%s%18p%s-%6ld ",(iterator->allocation[pos].address)?RESET:PINK,iterator->allocation[pos].address,RESET,iterator->allocation[pos].size);
+			pos++;
+			if (pos==255) {
+				pos=0;
+				iterator = iterator->next;
+			}
+		}
+		printf("\n\n");
+	#endif
 }
