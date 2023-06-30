@@ -27,4 +27,4 @@ void	mhelper_create(mhelper* this);
 void	mhelper_destroy(mhelper* this);
 void*	mhelper_alloc(mhelper* this, uint64_t size);
 uint8_t	mhelper_free(mhelper* this, void* memory);
-volatile void	mhelper_print(mhelper* this);
+void	mhelper_print(mhelper* this);

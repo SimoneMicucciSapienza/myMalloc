@@ -24,7 +24,7 @@ static inline page* _getpage_(void){
 		dprintf(STDERR_FILENO,"%sERROR%s memory mapping failed\t",RED,RESET);
 		raise(SIGILL);
 	}
-	_memset_(res,4096,0x00);
+	//_memset_(res,4096,0x00);
 	return res;
 }
 /*	set last memory elemeny in handler	*/
@@ -41,7 +41,7 @@ static inline void _memory_push(mhelper* this,mem value){
 	this->size++;
 }
 /*	get last memory elemeny from handler	*/
-static inline mem _memory_pop(mhelper* this){
+static inline mem _memory_pop(mhelper* this, mem zero){
 	//point to last allocated item
 	this->size--;
 	//adjust tail page pointer
@@ -53,16 +53,15 @@ static inline mem _memory_pop(mhelper* this){
 		dprintf(STDERR_FILENO,"%sERROR%s structure linking failure\t",RED,RESET);
 		raise(SIGILL);
 	}
-	printf("%s(size:%3d->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
+	printf("%s(size:%3ld->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
 	//minimal declaration
 	mem res;
-	const mem value = {NULL,0};
 	//saving value
 	res = this->tail->allocation[this->size%255];
 	//reset handler
-	this->tail->allocation[this->size%255] = value;
+	this->tail->allocation[this->size%255] = zero;
 	//return requested value
-	printf("%s(size:%3d->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
+	printf("%s(size:%3ld->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
 	return res;
 }
 
@@ -77,7 +76,8 @@ void	mhelper_create(mhelper* this){
 void	mhelper_destroy(mhelper* this){
 	//free every allocated block
 	while (this->size){
-		mem target = _memory_pop(this);
+		mem zero = {NULL,0};
+		mem target = _memory_pop(this,zero);
 		munmap(target.address,target.size);
 	}
 	//free every handler page
@@ -109,7 +109,7 @@ void*	mhelper_alloc(mhelper* this, uint64_t size){
 	return value.address;
 }
 uint8_t	mhelper_free(mhelper* this, void* memory){
-	mem target = {NULL,0}, swap = _memory_pop(this);
+	mem target = {NULL,0}, swap = _memory_pop(this,target);
 	volatile page *iter = this->head;
 	uint8_t relsize = 0,npage=0;
 	//find target memory
@@ -133,11 +133,12 @@ uint8_t	mhelper_free(mhelper* this, void* memory){
 	#endif
 	//free target
 	uint8_t res = munmap(target.address,target.size);
-	//substitute void value wt last
-	iter->allocation[relsize]=swap;
+	//substitute void value wt last only if not last spot
+	if (relsize != this->size%255 || iter != this->tail)
+		iter->allocation[relsize]=swap;
 	return res;
 }
-volatile void	mhelper_print(mhelper* this){
+void	mhelper_print(mhelper* this){
 	printf("\thandler: %s%p%s\n",this?ORANGE:RED,this,RESET);
 	if (!this)	return;
 	printf("\t\tsize: %s%ld%s\n",AZURE,this->size,RESET);
@@ -168,4 +169,5 @@ volatile void	mhelper_print(mhelper* this){
 		}
 		printf("\n\n");
 	#endif
+	return;
 }
