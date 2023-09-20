@@ -1,24 +1,23 @@
 CC=gcc
 CFLAGS=--std=gnu99 -Wall 
 
-OBJS=objs/buddy.o\
-     objs/bitmap.o
+OBJS=objs/mhelper.o
 
 BINS=.test
 
-.PHONY:	clean run debug
+.PHONY:	clear run debug
 
-debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1
+debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1 -ggdb
 debug:	$(BINS)
 	./$<
 
-.test:	buddytest.c $(OBJS)
+.test:	mhelpertest.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 objs/%.o:	%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-clean:	
+clear:
 	rm -rf $(OBJS) $(BINS)
 
 run:	$(BINS)
