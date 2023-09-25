@@ -54,5 +54,13 @@ void*	pseudoAlloc(size_t size){
 
 //	switch between all avaible allocator given to free given buffer
 char	pseudoFree(void* mem){
-
+	if (mem >= helper.buddy.pool && mem <= (helper.buddy.pool + 1024*1024))
+		buddy_free(helper.buddy, mem);
+	else if (mem >= helper.big_slab.buffer && mem <= (helper.big_slab.buffer + helper.big_slab.slab_elem * helper.big_slab.slab_size))
+		slabFree(helper.big_slab, mem);
+	else if (mem >= helper.small_slab.buffer && mem <= (helper.small_slab.buffer + helper.small_slab.slab_elem * helper.small_slab.slab_size))
+		slabFree(helper.small_slab, mem);
+	else
+		mhelper_free(helper.mhelper, mem);
+	return 0;
 }
