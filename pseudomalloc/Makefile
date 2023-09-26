@@ -2,16 +2,15 @@ CC=gcc
 CFLAGS=--std=gnu99 -Wall 
 
 OBJS=objs/buddy.o\
+     objs/slab.o\
+     objs/mhelper.o\
+     objs/pseudomalloc.o\
 
 BINS=.test
 
-.PHONY:	clean run debug
+.PHONY:	clean test run
 
-debug:	CFLAGS:=$(CFLAGS)-D_VERBOSE_=1
-debug:	$(BINS)
-	./$<
-
-.test:	buddytest.c $(OBJS)
+.test:	pseudotester.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 objs/%.o:	%.c
@@ -22,3 +21,5 @@ clean:
 
 run:	$(BINS)
 	./$<
+
+test:	$(BINS)
