@@ -10,7 +10,7 @@ BINS=.test
 
 .PHONY:	clean test run
 
-.test:	pseudotester.c $(OBJS)
+.test:	pseudomalloctest.c $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 objs/%.o:	%.c
