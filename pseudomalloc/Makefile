@@ -3,6 +3,7 @@ CFLAGS=--std=gnu99 -Wall
 
 OBJS=objs/buddy.o\
      objs/slab.o\
+     objs/bitmap.o\
      objs/mhelper.o\
      objs/pseudomalloc.o\
 
@@ -11,7 +12,7 @@ BINS=.test
 .PHONY:	clean test run
 
 .test:	pseudomalloctest.c $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -g -rdynamic -o $@ $^
 
 objs/%.o:	%.c
 	$(CC) $(CFLAGS) -c -o $@ $<

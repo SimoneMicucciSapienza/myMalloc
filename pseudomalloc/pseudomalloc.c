@@ -2,6 +2,8 @@
 #include "buddy.h"
 #include "slab.h"
 #include "mhelper.h"
+#include "bitmap.h"
+#include <stdio.h>
 
 /* _VERBOSE_ as debug for preprocessor*/
 
@@ -32,6 +34,12 @@ void	__attribute__ ((constructor)) pseudoCreate(){
 			sample,
 			1024,
 			16);
+	printf("----------------constructor----------------\n");
+	printf("buddy: %p ~ %p\nbig slab: %p ~ %p\nsmall slab: %p ~ %p\n",
+			pseudohelper.buddy.pool, pseudohelper.buddy.pool + 1024*1024,
+			pseudohelper.big_slab.buffer, pseudohelper.big_slab.buffer + 128*64,
+			pseudohelper.small_slab.buffer, pseudohelper.small_slab.buffer + 128*16);
+	printf("-------------------------------------------\n");
 }
 
 //	function called by default after main
