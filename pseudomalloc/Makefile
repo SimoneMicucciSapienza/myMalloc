@@ -9,7 +9,7 @@ OBJS=objs/buddy.o\
 
 BINS=.test
 
-.PHONY:	clean test run
+.PHONY:	test run clean
 
 .test:	pseudomalloctest.c $(OBJS)
 	$(CC) $(CFLAGS) -g -rdynamic -o $@ $^

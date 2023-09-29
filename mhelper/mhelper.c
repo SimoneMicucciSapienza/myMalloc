@@ -53,7 +53,7 @@ static inline mem _memory_pop(mhelper* this, mem zero){
 		dprintf(STDERR_FILENO,"%sERROR%s structure linking failure\t",RED,RESET);
 		raise(SIGILL);
 	}
-	printf("%s(size:%3ld->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
+	//printf("%s(size:%3ld->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
 	//minimal declaration
 	mem res;
 	//saving value
@@ -61,7 +61,7 @@ static inline mem _memory_pop(mhelper* this, mem zero){
 	//reset handler
 	this->tail->allocation[this->size%255] = zero;
 	//return requested value
-	printf("%s(size:%3ld->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
+	//printf("%s(size:%3ld->%14p-%ld)%s",GRAY,this->size,this->tail->allocation[this->size%255].address,this->tail->allocation[this->size%255].size,RESET);
 	return res;
 }
 

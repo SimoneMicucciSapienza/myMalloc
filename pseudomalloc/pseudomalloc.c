@@ -44,7 +44,9 @@ void	__attribute__ ((constructor)) pseudoCreate(){
 
 //	function called by default after main
 void	__attribute__ ((destructor)) pseudoDestroy(){
+	printf("----------------destructor-----------------\n");
 	mhelper_destroy(&(pseudohelper.mhelper));
+	printf("-------------------------------------------\n");
 }
 
 //	switch between all avaible allocator given to allocate a buffer of given size
